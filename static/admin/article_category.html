@@ -14,6 +14,7 @@
     <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+    <script src="./libs/http.js"></script>
 </head>
 
 <body>
@@ -35,7 +36,7 @@
                         <td>奇趣事</td>
                         <td>funny</td>
                         <td class="text-center">
-                            <a href="javascript:void(0)" data-toggle="modal" class=" btn btn-info btn-xs">编辑</a>
+                            <a href="javascript:void(0)" data-toggle="modal" class=" btn btn-info btn-xs" data-target="#myModal">编辑</a>
                             <a href="javascript:void(0)" class="btn btn-danger btn-xs">删除</a>
                         </td>
                     </tr>
@@ -51,5 +52,155 @@
             </table>
         </div>
     </div>
+    
+  
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">文章分类</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <!-- 使用这个隐藏域来存储文章分类id -->
+                        <input type="hidden" name="id" id="cateid">
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">文章分类名称</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">文章分类别名</label>
+                            <textarea class="form-control" id="message-text"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id="btn-cancel">取消</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+
+
+</body>
+<script type="text/html" id='template'>
+    {{each data}}
+    <tr>
+        <td>{{$value.name}}</td>
+        <td>{{$value.slug}}</td>
+        <td class="text-center">
+            <a href="javascript:void(0)" data-id='{{$value.id}}' data-toggle="modal" class=" btn btn-info btn-xs" data-target="#myModal">编辑</a>
+            <a href="javascript:void(0)" data-id='{{$value.id}}' class="btn btn-danger btn-xs" id='btn-delete'>删除</a>
+        </td>
+    </tr>
+
+    {{/each}}
+</script>
+<script>
+    $(function(){
+        // 获取文章
+        function getArticle(){
+            $.ajax({
+                url: BigNew.category_list,
+                type: 'get',
+                success: function(res){
+                    let htmlStr = template('template', res)
+                    $('tbody').html(htmlStr)
+                }
+            })
+        }
+        getArticle()
+
+
+
+
+        $('#myModal').on('show.bs.modal',function(e){
+            let target = e.relatedTarget;
+            if($('#xinzengfenlei')[0] == target){
+                $('#exampleModalLabel').text('新增分类');
+                $('#btn-confirm').addClass('btn-success').removeClass('btn-info')
+                $('#btn-confirm').click(function(){
+                    if($('#recipient-name').val().trim() == '' || $('#message-text').val().trim() == ''){
+                    alert('文章标题和内容不能为空');
+                    return;
+                }
+                $.post({
+                    url: BigNew.category_add,
+                    data: {
+                        name: $('#recipient-name').val().trim(),
+                        slug: $('#message-text').val().trim()
+                    },
+                    success: function(res){
+                        alert(res.msg)
+                        getArticle();
+                        $('#myModal').modal('hide')
+                    }
+                })
+                })
+            }else{
+                let cateId = $(target).attr('data-id');
+                    $.get({
+                        url: BigNew.category_search,
+                        data: {
+                            id: cateId
+                        },
+                        success: function (res) {
+                            console.log(res);
+                            if (res.code == 200) {
+                                $('#recipient-name').val(res.data[0].name)
+                                $('#message-text').val(res.data[0].slug)
+                                $('#cateid').val(res.data[0].id)
+                            }
+                        }
+                    })
+                $('#btn-confirm').click(function(){
+                    if($('#recipient-name').val().trim() == '' || $('#message-text').val().trim() == ''){
+                    alert('文章标题和内容不能为空');
+                    return;
+                }
+                console.log($('#cateid').val());
+                
+                $.post({
+                    url: BigNew.category_edit,
+                    data: {
+                        name: $('#recipient-name').val().trim(),
+                        slug: $('#message-text').val().trim(),
+                        id: $('#cateid').val()
+                    },
+                    success: function(res){
+                        getArticle();
+                        $('#myModal').modal('hide')
+                    }
+                })
+                })
+            }
+        })
+
+
+        $('tbody').on('click', '#btn-delete', function () {
+                let deleteId = $(this).attr('data-id');
+                // console.log(deleteId);
+                let ans = confirm('你确定要删除吗？');
+                // console.log(ans);
+                if (ans) {
+                    $.post({
+                        url: BigNew.category_delete,
+                        data: {
+                            id: deleteId
+                        },
+                        success: function (res) {
+                            if(res.code == 204) {
+                                getArticle();
+                            }
+                        }
+                    })
+                }
+            })
+
+    })
+</script>
 </html>
