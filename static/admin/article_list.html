@@ -107,7 +107,7 @@
                 <td class="text-center">{{$value.date}}</td>
                 <td class="text-center">{{$value.state}}</td>
                 <td class="text-center">
-                    <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
+                    <a href="article_edit.html?id={{$value.id}}" class="btn btn-default btn-xs" data-id="{{$value.id}}">编辑</a>
                     <a href="javascript:void(0);" class="btn btn-danger btn-xs delete" data-id="{{$value.id}}">删除</a>
                 </td>
             </tr>
@@ -142,12 +142,13 @@
                     perpage: 10
                 },
                 success: function (res) {
-                    console.log(res)
-                    console.log(res.data.data.length, res.data.totalPage, page)
+                    // console.log(res)
+                    // console.log(res.data.data.length, res.data.totalPage, page)
                     let html = template('article', res.data);
                     $('tbody').html(html);
                     if (res.data.data.length !== 0) {
                         $('#tips').hide()
+                        $('#pagination').show()
                         if (callback) {
                             callback(res.data.totalPage, page)
                         }
@@ -157,6 +158,7 @@
                             getArticle(page, callback)
                         } else {
                             $('#tips').show();
+                            $('#pagination').hide()
                         }
                     }
                 }
