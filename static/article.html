@@ -210,5 +210,109 @@
     <script src="./js/jquery-1.12.4.min.js"></script>
 
 </body>
+<script type="text/html" id="article">
+
+        <div class="breadcrumb">
+            当前位置： <a href="./index.html">首页</a> &gt; <a href="list.html">{{$data.data.category}}</a> &gt; 文章详情
+        </div>
+        <h3 class="article_title">{{$data.data.title}}</h3>
+        <div class="article_info">{{$data.data.author}} 发布于 {{$data.data.date}}&nbsp;&nbsp;&nbsp;分类: {{$data.data.category}}&nbsp;&nbsp;&nbsp;阅读:
+            ({{$data.data.read}})&nbsp;&nbsp;&nbsp;评论: ({{$data.data.comments}})</div>
+        <div class="article_con">
+
+            {{@ $data.data.content}}
+        </div>
+        <div class="article_links">
+            {{if $data.data.prev }}
+            上一篇： <a href="./article.html?id={{$data.data.prev.id}}">{{$data.data.prev.title}}</a><br>
+            {{/if}}
+            {{if $data.datanext}}
+            下一篇： <a href="#">{{$data.data.next}}</a>
+            {{/if}}
+        </div>
+
+        <form action="" class="comment_form">
+            <div class="form_group">
+                <label>用户名：</label>
+                <input type="text" placeholder="请输入用户名" class="comment_name">
+            </div>
+            <div class="form_group">
+                <label>评论内容：</label>
+                <textarea placeholder="请发表您的评论" class="comment_input"></textarea>
+            </div>
+            <div class="form_group">
+                <input type="submit" name="" value="评 论" class="comment_sub"></div>
+        </form>
+
+        <div class="comment_count">
+            
+        </div>
+
+        <div class="comment_list_con">
+      
+        </div>
+   
+</script>
+<script type="text/html" id="comment">
+    {{each data}}
+    <div class="comment_detail_list">
+            <div class="person_pic fl">{{$value.author[0]}}</div>
+            <div class="name_time fl"><b>{{$value.author}}</b><span>{{$value.date}}&nbsp{{$value.time}}</span></div>
+            <div class="comment_text fl">
+                {{$value.content}}
+            </div>
+        </div>
+    {{/each}}
+</script>
+<script>
+    $(function () {
+        let id = location.search.substr(4);
+        // console.log(id)
+        $.get({
+            url: 'http://localhost:8080/api/v1/index/article',
+            data: {
+                id: id
+            },
+            success: function (res) {
+                console.log(res)
+                let article = template('article', res)
+                $('.setfr').html(article);
+                getComment();
+            }
+        })
+        // 发表评论
+        function getComment(){
+            $.get({
+                    url: 'http://localhost:8080/api/v1/index/get_comment',
+                    data: {
+                        articleId: id
+                    },
+                    success: function (res) {
+                        // console.log(res)
+                        $('.comment_count').text(`${res.data.length}条评论`);
+                        let comment = template('comment', res)
+                        $('.comment_list_con').html(comment)
+                        $('input.comment_sub').on('click', function (e) {
+                            e.preventDefault()
+                            let author = $('.comment_name').val();
+                            let content = $('.comment_input').val();
+                            $.post({
+                                url: 'http://localhost:8080/api/v1/index/post_comment',
+                                data: {
+                                    author: author,
+                                    content: content,
+                                    articleId: id
+                                },
+                                success: function(res){
+                                    console.log(res)
+                                    getComment();
+                                }
+                            })
+                        })
+                    }
+                })
+        }
+    })
+</script>
 
 </html>
